@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Registro de notas</title>
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+  <main>
+    <h1>Registro de notas</h1>
+
+    <section class="controles" aria-label="Filtro y orden">
+      <label>Mostrar
+        <select id="filtro">
+          <option value="todos">Todos</option>
+          <option value="aprobados">Aprobados</option>
+          <option value="suspensos">Suspensos</option>
+        </select>
+      </label>
+      <label>Ordenar por
+        <select id="orden">
+          <option value="nombre">Nombre</option>
+          <option value="nota-desc">Nota más alta primero</option>
+          <option value="nota-asc">Nota más baja primero</option>
+        </select>
+      </label>
+    </section>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Nota</th>
+          <th><span class="solo-lectores">Borrar</span></th>
+        </tr>
+      </thead>
+      <tbody id="cuerpo-tabla"></tbody>
+    </table>
+
+    <section id="resumen" aria-label="Resumen de la clase"></section>
+
+    <form id="formulario" novalidate>
+      <h2>Añadir alumno</h2>
+      <label>Nombre
+        <input type="text" id="nombre" autocomplete="off">
+      </label>
+      <label>Nota (0 a 10, con punto: 7.5)
+        <input type="text" id="nota" inputmode="decimal" autocomplete="off">
+      </label>
+      <button type="submit">Añadir</button>
+      <p id="mensaje" role="alert"></p>
+    </form>
+  </main>
+
+  <script src="notas.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

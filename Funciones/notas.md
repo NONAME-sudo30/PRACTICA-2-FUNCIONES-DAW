@@ -143,8 +143,6 @@ git add .
 git commit -m "Fase 2: añadir, quitar, buscar y ordenar"
 ```
 
-![funciones-consola.png](funciones-consola.png)
-
 ---
 
 # Fase 3: Estadísticas de la clase
@@ -215,4 +213,80 @@ git add .
 git commit -m "Fase 3: estadísticas de la clase"
 ```
 
-![estadisticas-consola.png](estadisticas-consola.png)
+---
+
+# Fase 4: Tabla dinámica con filtro y orden
+
+En `notas.js` escribí `filtrarAlumnos`, `ordenarAlumnos` y `esNotaValida`. Después hice la página: `index.html` tiene la estructura, `estilos.css` el aspecto y `app.js` la lógica.
+
+## Las tres funciones
+
+| Función | Qué hace | Cambia la lista |
+|---------|----------|-----------------|
+| `filtrarAlumnos(lista, filtro)` | Devuelve una copia con los alumnos de "todos", "aprobados" (5 o más) o "suspensos" (menos de 5) | No |
+| `ordenarAlumnos(lista, criterio)` | Devuelve una copia ordenada por "nombre", "nota-desc" o "nota-asc". Usa `ordenarPorNombre` y `ordenarPorNota` de la Fase 2 | No |
+| `esNotaValida(texto)` | `true` si el texto es un número de 0 a 10; `false` si está vacío o no es un número | No (solo lee) |
+
+Pruebas con `esNotaValida`:
+
+| Llamada | Mi predicción | Lo que salió |
+|---------|---------------|--------------|
+| `esNotaValida("7.5")` | `true` | `true` |
+| `esNotaValida("")` | `false` | `false` |
+| `esNotaValida("11")` | `false` | `false` |
+| `esNotaValida("   ")` | `false` | `false` |
+| `esNotaValida("abc")` | `false` | `false` |
+| `esNotaValida("0")` y `("10")` | `true` | `true` |
+
+Con `"   "` (solo espacios) hay que tener cuidado: `Number("   ")` da `0`, que parecería una nota válida. Por eso primero compruebo con `trim()` que el texto no esté vacío.
+
+## Cómo está hecha la página
+
+**`index.html`:** tabla con las columnas Nombre, Nota y una para borrar; selector «Mostrar» (Todos, Aprobados, Suspensos); selector «Ordenar por» (Nombre, Nota más alta primero, Nota más baja primero); formulario con nombre, nota y botón Añadir; y un sitio para el resumen. Usé `<label>` en cada campo para que sea accesible.
+
+**`pintarTabla()`:** es la única función que dibuja la tabla. Coge la lista, aplica `filtrarAlumnos` y después `ordenarAlumnos`, vacía el `tbody` y escribe las filas. Se llama al cargar la página y cada vez que cambia algo (selectores, añadir, borrar). Si no hay alumnos que mostrar, escribe una fila con el mensaje «No hay alumnos que mostrar.».
+
+**Colores:** las notas aprobadas salen en verde con ✓ y las suspensas en rojo con ✗. Añadí el símbolo para que no dependa solo del color.
+
+**Filtro y orden:** cada selector tiene un evento `change` que llama a `pintarTabla()`.
+
+**Añadir:** al enviar el formulario compruebo en este orden que el nombre no esté vacío, que no haya ya un alumno con ese nombre (`buscarPorNombre`) y que la nota sea válida (`esNotaValida`). Si algo falla escribo un mensaje en la página, sin `alert`. Si todo está bien llamo a `anadirAlumno`, limpio el formulario y vuelvo a dibujar.
+
+**Borrar:** cada fila tiene un botón ✕. En vez de un evento por botón, puse uno solo en el `tbody` que detecta el clic con `closest("button.borrar")` y llama a `borrarPorNombre`. Así sigue funcionando aunque la tabla se redibuje.
+
+**Resumen:** número de alumnos, nota media con 2 decimales (`toFixed(2)`), nota máxima y número de aprobados, con las funciones de la Fase 3. Es de toda la clase y no solo de lo que se ve con el filtro. Si la lista queda vacía, la media sale `0.00` y la máxima `-`.
+
+**La lista verdadera:** en `app.js` la lista guardada es `const alumnos = [...ALUMNOS_INICIALES]`. Hice una copia para no tocar la constante original. Filtrar y ordenar solo trabajan con copias.
+
+## Pruebas de la página
+
+| Qué probé | Qué esperaba | Lo que salió |
+|-----------|--------------|--------------|
+| Carga inicial | 10 alumnos por nombre y resumen | Resumen: 10 alumnos, media 6.15, máxima 10, 7 aprobados |
+| Mostrar «Suspensos» | Diego, Luis y Sara | Diego, Luis y Sara |
+| Aprobados + nota más alta primero | Lucía, Marta, Hugo, Ana... | Lucía 10, Marta 9.25, Hugo 9, Ana 7.5... |
+| Aprobados + nota más baja primero | Pablo primero y Lucía última | Pablo 5 ... Lucía 10 |
+| Añadir con nombre vacío | Mensaje de error | «El nombre no puede estar vacío.» |
+| Añadir «Ana» (repetido) | Mensaje de error | «Ya hay un alumno que se llama Ana.» |
+| Añadir con nota vacía, «11» o «abc» | Mensaje de error | «La nota tiene que ser un número de 0 a 10...» |
+| Añadir Eva con 8 | 11 alumnos y sin mensaje | 11 alumnos, media 6.32, 8 aprobados, formulario limpio |
+| Borrar a Eva | Vuelve a 10 alumnos | 10 alumnos, media 6.15 |
+| Borrar a todos | Mensaje de tabla vacía | «No hay alumnos que mostrar.» y resumen con media 0.00 |
+| Nombre con HTML (`<b>x</b>`) | Se ve como texto | Se ve como texto, no se interpreta |
+
+**Una cosa que noté:** esta práctica no pide que «ana» y «Ana» cuenten como el mismo nombre, y `buscarPorNombre` compara tal cual, así que ahora mismo se pueden añadir las dos. Lo dejo así porque el enunciado dice que use `buscarPorNombre`.
+
+**Otra:** la nota se escribe con punto (`7.5`). Si alguien escribe `7,5` sale el mensaje de error, que ya avisa de usar punto.
+
+## Preguntas
+
+**1. ¿Por qué `filtrarAlumnos` y `ordenarAlumnos` devuelven copias?**
+Porque la lista verdadera es la que se queda guardada (`alumnos`), y filtrar y ordenar solo cambian lo que se *ve*, no los datos. Si `filtrarAlumnos` quitara alumnos de la lista original, al elegir «Suspensos» los aprobados se borrarían de verdad y no se podrían recuperar al volver a «Todos». Devolviendo copias puedo filtrar y ordenar tantas veces como quiera y la lista guardada sigue intacta.
+
+**2. ¿Qué pasaría en la página si `ordenarAlumnos` cambiara la lista original?**
+La lista guardada se quedaría reordenada cada vez que el usuario cambiara el selector. El orden en que se añadieron los alumnos se perdería, y no habría forma de volver a él. Además sería un efecto raro: algo que solo debería cambiar cómo se ve la tabla estaría modificando los datos por debajo. Con `sort` pasa porque (como vi en la Fase 1) cambia el array sobre el que se usa; por eso `ordenarPorNota` y `ordenarPorNombre` ordenan una copia hecha con `[...lista]`.
+
+```bash
+git add .
+git commit -m "Fase 4: tabla dinámica con filtro y orden"
+```

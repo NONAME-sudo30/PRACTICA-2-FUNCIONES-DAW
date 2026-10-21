@@ -1,6 +1,3 @@
-// notas.js: funciones que trabajan con la lista de alumnos
-// Cada alumno es un objeto: { nombre: "Ana", nota: 7.5 }
-
 const ALUMNOS_INICIALES = [
   { nombre: "Ana", nota: 7.5 },
   { nombre: "Luis", nota: 4 },
@@ -112,4 +109,42 @@ function todosAprobados(lista) {
 // NO cambia la lista (ordenarPorNota ya trabaja con una copia).
 function ranking(lista, n) {
   return ordenarPorNota(lista).slice(0, n);
+}
+
+// ---------- Fase 4: filtro, orden y validación ----------
+
+// Devuelve una copia con los alumnos que cumplen el filtro:
+// "todos", "aprobados" (5 o más) o "suspensos" (menos de 5).
+// NO cambia la lista.
+function filtrarAlumnos(lista, filtro) {
+  if (filtro === "aprobados") {
+    return aprobados(lista);
+  }
+  if (filtro === "suspensos") {
+    return lista.filter(alumno => alumno.nota < 5);
+  }
+  return [...lista];
+}
+
+// Devuelve una copia ordenada según el criterio:
+// "nombre", "nota-desc" o "nota-asc". Usa las funciones de la Fase 2.
+// NO cambia la lista.
+function ordenarAlumnos(lista, criterio) {
+  if (criterio === "nota-desc") {
+    return ordenarPorNota(lista);
+  }
+  if (criterio === "nota-asc") {
+    return ordenarPorNota(lista).reverse();
+  }
+  return ordenarPorNombre(lista);
+}
+
+// Devuelve true si el texto es un número de 0 a 10.
+// Devuelve false si está vacío o no es un número.
+function esNotaValida(texto) {
+  if (texto.trim() === "") {
+    return false;
+  }
+  const numero = Number(texto);
+  return !isNaN(numero) && numero >= 0 && numero <= 10;
 }

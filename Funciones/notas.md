@@ -143,6 +143,8 @@ git add .
 git commit -m "Fase 2: añadir, quitar, buscar y ordenar"
 ```
 
+![funciones-consola.png](funciones-consola.png)
+
 ---
 
 # Fase 3: Estadísticas de la clase
@@ -212,6 +214,8 @@ aprobados(lista).map(alumno => alumno.nombre);
 git add .
 git commit -m "Fase 3: estadísticas de la clase"
 ```
+
+![estadisticas-consola.png](estadisticas-consola.png)
 
 ---
 
@@ -290,3 +294,142 @@ La lista guardada se quedaría reordenada cada vez que el usuario cambiara el se
 git add .
 git commit -m "Fase 4: tabla dinámica con filtro y orden"
 ```
+
+![pagina-completa.png](pagina-completa.png)
+
+---
+
+# Fase 5: Depura con console.table
+
+## Mira tus datos
+
+**1. `console.table(alumnos)`** muestra una tabla con una fila por alumno. La primera columna es `(index)` (la posición, de 0 a 9) y después hay una columna por cada propiedad del objeto: `nombre` y `nota`. Los textos salen entre comillas (`'Ana'`) y los números sin ellas (`7.5`). Se ve mucho mejor que con `console.log`, donde saldría una lista de objetos en líneas.
+
+**2. `console.table(alumnos.map(a => a.nota))`** muestra una tabla con las columnas `(index)` y `Values`, con solo las 10 notas. Como `map` devuelve un array de números y no de objetos, no hay nombres de propiedad y por eso la columna se llama `Values`.
+
+## Los cuatro fallos
+
+### Fallo 1. Quería ver 1, 5, 9, 10
+
+```js
+const notas = [10, 9, 1, 5];
+notas.sort();
+console.log(notas);
+```
+
+- **Qué pasaba:** salía `[1, 10, 5, 9]` en vez de `[1, 5, 9, 10]`.
+- **Por qué:** `sort()` sin función de comparación convierte los números a texto y los ordena alfabéticamente. Como texto, `"10"` va antes que `"5"` porque `"1"` < `"5"`. Es lo mismo que me pasó en la Fase 1 con `[10, 9, 1].sort()`.
+- **Cómo lo arreglé:** pasándole una función de comparación numérica: `notas.sort((a, b) => a - b)`. Ahora sale `[1, 5, 9, 10]`.
+- **Herramienta:** `console.log`. Con ver lo que imprimía el array ya se notaba que el orden no era el numérico.
+
+### Fallo 2. Ordenar una copia y dejar `alumnos` como estaba
+
+```js
+const copia = alumnos;
+copia.sort((a, b) => a.nota - b.nota);
+```
+
+- **Qué pasaba:** `alumnos` también se reordenó. Con `console.table(alumnos)` después, en la primera fila estaba Sara (1) en vez de Ana, y todo estaba ordenado de menos a más nota.
+- **Por qué:** `const copia = alumnos` no copia nada, solo guarda la misma referencia. `copia` y `alumnos` son el mismo array, y `sort` cambia el array sobre el que se usa. Comprobé en la consola que `copia === alumnos` daba `true`.
+- **Cómo lo arreglé:** haciendo una copia de verdad con el operador spread: `const copia = [...alumnos]`. Después de ordenar, `alumnos[0]` sigue siendo Ana y `copia[0]` es Sara, y `copia === alumnos` da `false`.
+- **Herramienta:** `console.table`, porque en la tabla se ve de golpe que todo el orden de `alumnos` había cambiado. Además usé `copia === alumnos` en la consola para confirmar la causa.
+
+### Fallo 3. La suma de una lista vacía tiene que dar 0
+
+```js
+function suma(notas) {
+  return notas.reduce((a, b) => a + b);
+}
+console.log(suma([]));
+```
+
+- **Qué pasaba:** en vez de `0` salía un error: `TypeError: Reduce of empty array with no initial value`.
+- **Por qué:** sin valor inicial, `reduce` usa el primer elemento como punto de partida. Con una lista vacía no hay primer elemento y no puede empezar. Es lo mismo que vi en el experimento 2 de la Fase 3.
+- **Cómo lo arreglé:** añadiendo el valor inicial `0`: `notas.reduce((a, b) => a + b, 0)`. Ahora `suma([])` devuelve `0`.
+- **Herramienta:** el mensaje de la consola. Dice exactamente cuál es el problema ("no initial value").
+
+### Fallo 4. Escribir el nombre de cada alumno
+
+```js
+for (let i = 0; i <= alumnos.length; i++) {
+  console.log(alumnos[i].nombre);
+}
+```
+
+- **Qué pasaba:** escribía los 10 nombres bien y al final fallaba con `TypeError: Cannot read properties of undefined (reading 'nombre')`.
+- **Por qué:** los índices van de 0 a 9 porque hay 10 alumnos (`length` es 10). Con `<=` el bucle llega también a `i = 10`, y `alumnos[10]` no existe, es `undefined`, y `undefined.nombre` da error. Lo comprobé en la consola: `alumnos[10]` da `undefined`. Es el mismo caso de `a[3]` de la Fase 1, pero aquí sí da error porque se intenta leer una propiedad de `undefined`.
+- **Cómo lo arreglé:** cambiando `<=` por `<`: `i < alumnos.length`. Ahora escribe los 10 nombres y termina sin error.
+- **Herramienta:** el mensaje de la consola (dice que algo es `undefined`) y `console.log` (el último valor de `i` y `alumnos[10]` para ver dónde se pasaba).
+
+### Resumen de los fallos
+
+| Fallo | Causa | Arreglo | Herramienta |
+|-------|-------|---------|-------------|
+| 1 | `sort()` ordena como texto | `sort((a, b) => a - b)` | `console.log` |
+| 2 | `const copia = alumnos` referencia, no copia | `[...alumnos]` | `console.table` |
+| 3 | `reduce` sin valor inicial en lista vacía | Valor inicial `0` | Mensaje de la consola |
+| 4 | `<=` se pasa de la última posición | `<` | Mensaje de la consola y `console.log` |
+
+Los cuatro errores tienen que ver con cosas que ya había visto antes: el orden de `sort` (Fase 1), copiar frente a referenciar (Fase 1), el valor inicial de `reduce` (Fase 3) y leer una posición que no existe (Fase 1).
+
+El código con los cuatro fallos (comentados) y sus arreglos está en `fase5-depuracion.js`.
+
+## Documentación
+
+**1. Comentarios JSDoc en `notas.js`.** Encima de cada función escribí un comentario `/** ... */` con qué hace, qué recibe (`@param`), qué devuelve (`@returns`) y si cambia la lista o no. También puse un `@typedef` para describir qué es un `Alumno` (`nombre` y `nota`). Comprobé que solo cambié comentarios: quité todos los comentarios del archivo antes y después y el código era idéntico, y las pruebas de las fases anteriores siguen dando lo mismo.
+
+**2. `README.md`.** Tiene dos listas, la de las funciones que cambian la lista (`anadirAlumno`, `quitarUltimo`, `insertarEn`, `borrarPorNombre`) y la de las que no (las demás, que devuelven una copia o un dato). También explica para qué es cada archivo.
+
+```bash
+git add .
+git commit -m "Fase 5: depuración y documentación"
+```
+
+---
+# Registro de notas
+
+Práctica 2 · Arrays — Desarrollo Web en Entorno Cliente · 2º DAW
+
+Página que muestra una tabla de alumnos con sus notas. Se puede filtrar (todos, aprobados, suspensos), ordenar (por nombre o por nota), añadir alumnos nuevos y borrarlos. Debajo de la tabla hay un resumen de la clase.
+
+## Archivos
+
+- `index.html`: la estructura de la página.
+- `estilos.css`: el aspecto.
+- `notas.js`: las funciones que trabajan con la lista de alumnos.
+- `app.js`: el código de la página (dibujar la tabla, eventos).
+- `notas.md`: mis apuntes de cada fase.
+
+## Funciones que cambian la lista
+
+Modifican el array que reciben (usan `push`, `pop` o `splice`):
+
+- `anadirAlumno(lista, nombre, nota)`
+- `quitarUltimo(lista)`
+- `insertarEn(lista, posicion, nombre, nota)`
+- `borrarPorNombre(lista, nombre)`
+
+## Funciones que no la cambian
+
+Devuelven una copia o un dato y la lista se queda como estaba.
+
+**Devuelven una copia (un array nuevo):**
+
+- `ordenarPorNota(lista)`
+- `ordenarPorNombre(lista)`
+- `aprobados(lista)`
+- `ranking(lista, n)`
+- `filtrarAlumnos(lista, filtro)`
+- `ordenarAlumnos(lista, criterio)`
+
+**Devuelven un dato:**
+
+- `buscarPorNombre(lista, nombre)`: un alumno o `undefined`.
+- `nombresAprobados(lista)`: un array de nombres.
+- `notaMedia(lista)`: un número.
+- `notaMaxima(lista)`: un número o `null`.
+- `hayAlgunDiez(lista)`: `true` o `false`.
+- `todosAprobados(lista)`: `true` o `false`.
+- `esNotaValida(texto)`: `true` o `false`.
+
+Las copias son copias del array, pero los alumnos de dentro son los mismos objetos. Las funciones de este proyecto no modifican esos objetos.
